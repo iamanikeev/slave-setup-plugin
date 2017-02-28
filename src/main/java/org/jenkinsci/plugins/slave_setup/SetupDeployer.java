@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.slave_setup;
 
+import com.google.gson.Gson;
 import hudson.*;
 import hudson.model.Computer;
 import hudson.model.Label;
@@ -212,8 +213,13 @@ public class SetupDeployer {
 
     public void executeStateChangeScript(Computer c, SetupConfig config, TaskListener listener, boolean newState)
             throws AbortException {
+        Gson gson = new Gson();
         for (SetupConfigItem setupConfigItem : config.getSetupConfigItems()) {
             String scriptItem = newState ? setupConfigItem.getOnOnlineScript() : setupConfigItem.getOnOfflineScript();
+            listener.getLogger().print("Config item:");
+            listener.getLogger().println(gson.toJson(setupConfigItem));
+            listener.getLogger().print("State script for state: " + newState + " :");
+            listener.getLogger().print(scriptItem);
             if (!StringUtils.isBlank(scriptItem) && checkLabels(c, setupConfigItem)) {
                 boolean successful = executeScriptOnMaster(
                         scriptItem,
