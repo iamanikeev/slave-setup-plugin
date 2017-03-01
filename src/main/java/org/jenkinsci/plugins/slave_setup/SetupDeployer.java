@@ -117,15 +117,15 @@ public class SetupDeployer {
      * @return true if the given setup config item is responsible for the given slave computer
      */
     public boolean checkLabels(Computer c, SetupConfigItem setupConfigItem) {
+        LOGGER.info("Checking label assignment...");
         String assignedLabel = setupConfigItem.getAssignedLabelString();
+        LOGGER.info("Label string: " + assignedLabel);
         if (StringUtils.isBlank(assignedLabel)) {
             return true;
         }
-
-        //Label l = Jenkins.getInstance().getLabel(setupConfigItem.getAssignedLabelString());
         Label label = Label.get(assignedLabel);
-
-        return label.contains(c.getNode());
+        LOGGER.info("Label matches: " + label.matches(c.getNode()));
+        return label.matches(c.getNode());
     }
 
     private void executeScript(Node node, FilePath root, TaskListener listener, String cmdLine, EnvVars additionalEnvironment) throws IOException, InterruptedException {
