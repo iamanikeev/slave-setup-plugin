@@ -1,6 +1,5 @@
 package org.jenkinsci.plugins.slave_setup;
 
-import com.google.gson.Gson;
 import hudson.*;
 import hudson.model.Computer;
 import hudson.model.Label;
@@ -117,15 +116,12 @@ public class SetupDeployer {
      * @return true if the given setup config item is responsible for the given slave computer
      */
     public boolean checkLabels(Computer c, SetupConfigItem setupConfigItem) {
-        LOGGER.info("Checking label assignment...");
         String assignedLabel = setupConfigItem.getAssignedLabelString();
-        LOGGER.info("Label string: " + assignedLabel);
         if (StringUtils.isBlank(assignedLabel)) {
+            LOGGER.info("label is blank");
             return true;
         }
-        Label label = Label.get(assignedLabel);
-        LOGGER.info("Label matches: " + label.matches(c.getNode()));
-        return label.matches(c.getNode());
+        return Label.get(assignedLabel).contains(c.getNode());
     }
 
     private void executeScript(Node node, FilePath root, TaskListener listener, String cmdLine, EnvVars additionalEnvironment) throws IOException, InterruptedException {
@@ -213,14 +209,15 @@ public class SetupDeployer {
 
     public void executeStateChangeScript(Computer c, SetupConfig config, TaskListener listener, boolean newState)
             throws AbortException {
-        Gson gson = new Gson();
         for (SetupConfigItem setupConfigItem : config.getSetupConfigItems()) {
             String scriptItem = newState ? setupConfigItem.getOnOnlineScript() : setupConfigItem.getOnOfflineScript();
-            listener.getLogger().print("Config item:");
-            listener.getLogger().println(gson.toJson(setupConfigItem));
-            listener.getLogger().print("State script for state: " + newState + " :");
-            listener.getLogger().print(scriptItem);
-            if (!StringUtils.isBlank(scriptItem) && checkLabels(c, setupConfigItem)) {
+            // in case if we are executing after-offline script, node might get removed before the label check passes,
+            // so we just make sure that offline node name contains label string in name
+            boolean labelMatches = newState ? checkLabels(c, setupConfigItem)
+                    : c.getName().contains(setupConfigItem.getAssignedLabelString());
+            LOGGER.info("label matches: " + labelMatches);
+            if (!StringUtils.isBlank(scriptItem) && labelMatches) {
+                LOGGER.info("Start script execution");
                 boolean successful = executeScriptOnMaster(
                         scriptItem,
                         c,

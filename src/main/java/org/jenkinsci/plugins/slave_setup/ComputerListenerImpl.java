@@ -77,7 +77,7 @@ public class ComputerListenerImpl extends ComputerListener {
             don't require this check. But onOnline is being triggered upon master node startup. It seems fair to skip
             these actions for master node. TODO: discuss that, may be it should be optional
              */
-            listener.getLogger().println("right after slave " + c.getName() + " got online ...");
+            LOGGER.info("right after slave " + c.getName() + " got online ...");
             SetupConfig config = SetupConfig.get();
             deployer.executeStateChangeScript(c, config, listener, true);
         }
@@ -92,7 +92,7 @@ public class ComputerListenerImpl extends ComputerListener {
     @Override
     public void onOffline(Computer c) {
         TaskListener listener = new LogTaskListener(LOGGER, Level.ALL);
-        listener.getLogger().println("right after slave " + c.getName() + " got offline ...");
+        LOGGER.info("right after slave " + c.getName() + " got offline ...");
         SetupConfig config = SetupConfig.get();
         try {
             deployer.executeStateChangeScript(c, config, listener, false);
